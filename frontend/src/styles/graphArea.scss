@@ -1,0 +1,10 @@
+.graph-area {
+  display: flex;
+  width: 100%;
+
+  div {
+    max-width: unset !important;
+    width: 500px !important;
+    height: 300px !important;
+  }
+}
