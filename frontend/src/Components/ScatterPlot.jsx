@@ -23,9 +23,8 @@ const options = {
 }
 
 const ScatterPlot = ({ data }) => {
-  console.log("render scatterplot")
   return (
-    <div style={{ maxWidth: "600px", margin: "auto" }}>
+    <div style={{ maxWidth: "800px", margin: "auto" }}>
       <Scatter data={data} options={options} />
     </div>
   )

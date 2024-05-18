@@ -1,5 +1,5 @@
 // libs
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Chart as ChartJS,
   LinearScale,
@@ -11,9 +11,11 @@ import {
 import api from "./api/axios"
 
 // components
+import Modal from "./Components/Modal"
 import Form from "./Components/Form"
 import ScatterPlot from "./Components/ScatterPlot"
 import PointsTable from "./Components/PointsTable"
+import MyStats from "./Components/MyStats"
 
 // styles
 import "./styles/graphArea.scss"
@@ -22,34 +24,47 @@ import "./styles/card.scss"
 // util
 import { generatePoints } from "./utils/generatePoints"
 import { drawLineOfBestFit, drawUserLine } from "./utils/drawLine"
+import { ascendingObj, twoDimensionalArray } from "./utils/formatCoordinates"
 
 // init graph
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend)
 
 const App = () => {
   const [chartData, setChartData] = useState(generatePoints())
-  const [sessionData, setSessionData] = useState({
+  const [attemptData, setAttemptData] = useState({
     attemptNum: 1,
     coordinatesId: undefined,
   })
-  const [coordinatesId, setCoordinatesId] = useState(undefined)
-  const [attemptNum, setAttemptNum] = useState(1)
-  const [showModal, setShowModal] = useState(false)
-
-  // TODO: if attempt number is 4 reveal answer
-  console.log(attemptNum)
+  const [showModal, setShowModal] = useState({ show: false, content: null })
+  const [myStats, setMyStats] = useState(false)
 
   // grab just the points data and sort in ascending order depending on the x coordinate
-  const points = chartData.datasets[0].data.sort((a, b) =>
-    a.x <= b.x ? -1 : 1
-  )
+  const points = ascendingObj(chartData.datasets[0].data)
 
   // const handleNewCoordinates = () => {
   //   setAttemptNum(1)
   //   setChartData(generatePoints)
   // }
 
-  const handleDrawUserLine = (slope, intercept) => {
+  const handleReset = () => {
+    setShowModal({ show: false, content: null })
+    setChartData(generatePoints())
+    setAttemptData({ attemptNum: 1, coordinatesId: undefined })
+  }
+
+  const handleRevealLinearEquation = () => {
+    setChartData((prev) => {
+      return {
+        ...prev,
+        datasets: [
+          ...prev.datasets,
+          drawLineOfBestFit(twoDimensionalArray(chartData.datasets[0].data)),
+        ],
+      }
+    })
+  }
+
+  const handleDrawLinearEquation = (slope, intercept) => {
     setChartData((prev) => {
       const newDatasets = [prev.datasets[0], drawUserLine(slope, intercept)]
 
@@ -60,6 +75,7 @@ const App = () => {
   /**
    * Send the student submission to the backend
    * Including name, slope, intercept, points, setId and attempt values
+   * Unpon response, display modal describing the correctness and/or remaining attempts
    */
   const handleSubmission = async (e) => {
     e.preventDefault()
@@ -79,45 +95,153 @@ const App = () => {
         slope: formData.get("slope"),
         intercept: formData.get("intercept"),
         coordinates,
-        setId: sessionData.coordinatesId,
-        attemptNum: sessionData.attemptNum,
+        setId: attemptData.coordinatesId,
+        attemptNum: attemptData.attemptNum,
       })
-      console.log(response)
 
-      if (response.data.status === "success") {
-        setSessionData({
-          coordinatesId: response.data.data.setId,
-          attemptNum: response.data.data.attemptNum,
-        })
-
-        if (response.data.data.setId) setCoordinatesId(response.data.data.setId)
+      if (response.data.status !== "success")
+        throw new Error("something went wrong, no server resonse")
+      else {
         if (response.data.data.isCorrect) {
-          // show alert
+          handleRevealLinearEquation()
+          // show correct answer modal
+          setShowModal({
+            show: true,
+            content: (
+              <>
+                <h2>Correct!</h2>
+                <p>You found the answer in {attemptData.attemptNum} attemps!</p>
+                <div className="button-area">
+                  <button onClick={handleReset}>New Problem</button>
+                </div>
+              </>
+            ),
+          })
+        } else {
+          // incorrect attempt
+          if (attemptData.attemptNum >= 3) {
+            // exausted all 3 attempts, reveal answer and reset
+            // draw line representing backend's solution
+            handleRevealLinearEquation()
+            setShowModal({
+              show: true,
+              content: (
+                <>
+                  <h2>Not Quite!</h2>
+                  <p>
+                    You were unable to derive the correct linear equation that
+                    describes the line of best fit
+                  </p>
+                  <p className="answer">
+                    The correct answer is{" "}
+                    <strong>
+                      y ={" "}
+                      <span className="highlight">
+                        {response.data.data.slope}
+                      </span>
+                      x +
+                      <span className="highlight">
+                        {response.data.data.intercept}
+                      </span>
+                    </strong>
+                  </p>
+                  <div className="button-area">
+                    <button
+                      onClick={() => {
+                        setShowModal({ show: false, content: null })
+                        setTimeout(() => {
+                          handleReset()
+                        }, 3000)
+                      }}
+                    >
+                      New Problem
+                    </button>
+                  </div>
+                </>
+              ),
+            })
+          } else {
+            // has attempts remaining for this set of coordinates
+            setShowModal({
+              show: true,
+              content: (
+                <>
+                  <h2>Try Again!</h2>
+                  <p>
+                    You have {3 - attemptData.attemptNum} attempts remaining.
+                  </p>
+                  <div className="button-area">
+                    <button
+                      onClick={() =>
+                        setShowModal({ show: false, content: null })
+                      }
+                    >
+                      Close
+                    </button>
+                  </div>
+                </>
+              ),
+            })
+          }
+          // store info required subsequent attempts on these coordinates
+          setAttemptData({
+            coordinatesId: response.data.data.setId,
+            attemptNum: response.data.data.attemptNum,
+          })
         }
       }
     } catch (err) {
       if (err.response) {
         console.error(`Error 💥: ${err.response.data.message}`)
       } else {
-        console.log(`Error 💥: ${err}`)
+        console.log(`Error 💥: ${err.message}`)
       }
+    }
+  }
+
+  /**
+   * Show useful metrics to the user after entering their name
+   */
+  const handleShowUserStats = async (name) => {
+    if (!name || name === "") {
+      setMyStats(<p>Please provide your name</p>)
+    } else {
+      const results = await (
+        await api.get(`/api/v1/students/statistics/${name}`)
+      ).data.data
+      setMyStats(
+        <div className="stats-table">
+          <p>
+            Attempts: <span>{results.totalAttempts}</span>
+          </p>
+          <p>
+            Successes: <span>{results.successes}</span>
+          </p>
+          <p>
+            Success Rate: <span>{results.successRate}%</span>
+          </p>
+        </div>
+      )
+
+      setTimeout(() => setMyStats(false), 16000)
     }
   }
 
   return (
     <>
+      <Modal open={showModal.show}>{showModal.content}</Modal>
       <h1>Linear Regression Checker</h1>
       <div className="app-body">
-        <div className="button-area">
-          {/* <button onClick={() => setChartData(generatePoints())}>
-          Generate New Points
-        </button> */}
-        </div>
         <div className="graph-area">
           <ScatterPlot data={chartData} />
           <PointsTable points={points} />
         </div>
-        <Form onSubmit={handleSubmission} onDraw={handleDrawUserLine} />
+        <Form
+          onShowStats={handleShowUserStats}
+          onSubmit={handleSubmission}
+          onDraw={handleDrawLinearEquation}
+        />
+        {myStats && <MyStats>{myStats}</MyStats>}
       </div>
     </>
   )

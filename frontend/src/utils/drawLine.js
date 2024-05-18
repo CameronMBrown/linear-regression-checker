@@ -4,7 +4,7 @@ export const drawLineOfBestFit = (dataPoints) => {
   const lineOfBestFit = regression.linear(dataPoints)
 
   return {
-    borderColor: "red",
+    borderColor: "green",
     data: [
       { x: 0, y: lineOfBestFit.predict(0)[1] },
       { x: 10, y: lineOfBestFit.predict(10)[1] },
@@ -16,9 +16,10 @@ export const drawLineOfBestFit = (dataPoints) => {
 export const drawUserLine = (slope, intercept) => {
   return {
     borderColor: "orange",
+    borderDash: [5, 5],
     data: [
-      { x: 0, y: intercept },
-      { x: 10, y: slope + intercept },
+      { x: 0, y: parseFloat(intercept) },
+      { x: 10, y: parseFloat(slope) * 10 + parseFloat(intercept) },
     ],
     showLine: true,
   }

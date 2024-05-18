@@ -3,8 +3,8 @@
   width: 100%;
 
   div {
-    max-width: unset !important;
-    width: 500px !important;
-    height: 300px !important;
+    aspect-ratio: 2/1 !important;
+    width: 60vw !important;
+    height: auto !important;
   }
 }

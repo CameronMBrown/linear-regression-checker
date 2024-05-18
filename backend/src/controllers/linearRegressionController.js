@@ -7,8 +7,7 @@ const verifyStudentId = (studentId, res, next) => {
     res
       .status(500)
       .json({ message: "Student lookup failed, please try again later." })
-    console.log("Student ID: ", studentId)
-    return next(new AppError("Unable to fetch student id", 500))
+    return next(new AppError("Unable sto fetch student id", 500))
   }
 
   return studentId
@@ -55,7 +54,7 @@ exports.addCoordinates = (req, res, next) => {
           res.status(500).send("Internal Server Error")
         }
 
-        res.locals.set_id = results.rows[0].set_id
+        res.locals.setId = results.rows[0].set_id
         next()
       }
     )
@@ -68,6 +67,7 @@ exports.addCoordinates = (req, res, next) => {
 
 exports.isLineOfBestFit = (req, res, next) => {
   const studentId = verifyStudentId(req.body.studentId, res, next)
+  const setId = res.locals.setId
   const { coordinates, slope, intercept, attemptNum } = req.body
 
   if (!coordinates || !slope || !intercept || !attemptNum) {
@@ -94,19 +94,16 @@ exports.isLineOfBestFit = (req, res, next) => {
   }
 
   // log attempt to db
-  console.log(req.body)
   pool.query(
     queries.newAttempt,
-    [studentId, slope, intercept, isCorrect, attemptNum],
+    [setId, slope, intercept, isCorrect, attemptNum],
     (error, results) => {
       if (error) {
         console.error("Error executing query: ", error)
         res.status(500).send("Internal Server Error")
       }
 
-      const attemptId = results.rows[0].attempt_id
-
-      if (!isCorrect && attemptNum > 3) {
+      if (!isCorrect && attemptNum >= 3) {
         res.status(200).json({
           message: "reveal answer",
           status: "success",
@@ -114,8 +111,8 @@ exports.isLineOfBestFit = (req, res, next) => {
             isCorrect,
             attemptNum: 1,
             setId: undefined,
-            slope: computedSlope,
-            intercept: computedIntercept,
+            slope: computedSlope.toFixed(1),
+            intercept: computedIntercept.toFixed(1),
           },
         })
       } else {
@@ -123,7 +120,7 @@ exports.isLineOfBestFit = (req, res, next) => {
           status: "success",
           data: {
             attemptNum: attemptNum + 1,
-            setId: res.locals.set_id,
+            setId,
             isCorrect,
           },
         })

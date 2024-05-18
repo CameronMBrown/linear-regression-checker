@@ -1,13 +1,13 @@
 import { useState } from "react"
 import "../styles/formArea.scss"
 
-function Form({ onSubmit, onDraw }) {
+function Form({ onShowStats, onSubmit, onDraw }) {
+  const [name, setName] = useState("")
   const [slope, setSlope] = useState("")
   const [intercept, setIntercept] = useState("")
 
   const handleDrawLinear = () => {
     if (slope !== "" && intercept !== "" && slope >= 0 && intercept >= 0) {
-      console.log("HERE!")
       onDraw(slope, intercept)
     }
   }
@@ -15,7 +15,13 @@ function Form({ onSubmit, onDraw }) {
   return (
     <form className="form card" onSubmit={onSubmit}>
       <div>
-        <input name="name" type="text" placeholder="your name"></input>
+        <input
+          name="name"
+          type="text"
+          placeholder="your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        ></input>
       </div>
       <p className="linear-equation">
         y =
@@ -38,6 +44,9 @@ function Form({ onSubmit, onDraw }) {
         ></input>
       </p>
       <div className="button-area">
+        <button type="button" onClick={() => onShowStats(name)}>
+          Show My Stats
+        </button>
         <button type="button" onClick={handleDrawLinear}>
           Draw
         </button>

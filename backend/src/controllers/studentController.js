@@ -5,41 +5,43 @@ const queries = require("../queries/studentQueries")
 /**
  * Throws generic app error and sends 500 to client when queries fail
  */
-const handleQueryError = (error, next) => {
+const handleQueryError = (res, error, next) => {
   if (error) {
     res.status(500).send("Internal Server Error")
-    return next(new AppError("Error executing query", 500))
+    return next(new AppError(`Error executing query`, 500))
   }
+}
+
+exports.confirmSuccess = (req, res) => {
+  res.status(201).json({ status: "success", message: "student record created" })
 }
 
 exports.getStudents = (req, res) => {
   pool.query(queries.getStudents, (error, results) => {
-    if (error) {
-      console.error("Error executing query: ", error)
-      res.status(500).send("Internal Server Error")
-    }
+    handleQueryError(res, error, next)
 
     res.status(200).json(results.rows)
   })
 }
 
-/**
- * Used to check whether a student exists in the database
- */
-exports.getStudentByName = (req, res) => {
+exports.getStudentIdByName = (req, res, next) => {
   const name = req.params.name.toLocaleLowerCase()
 
-  if (!name) res.status(400).send("Please provide a student name")
+  if (!name) {
+    res.status(400).send("Please provide a student name")
+    return next(new AppError("Error 💥: no name provided", 400))
+  }
 
-  pool.query(queries.getStudentByName, [name], (error, results) => {
-    handleQueryError(error, next)
+  pool.query(queries.getStudentIdByName, [name], (error, results) => {
+    handleQueryError(res, error, next)
 
     if (!results.rows.length) {
       res.status(404).send("No student by that name was found in the database")
+      return new (AppError("student lookup failed"))()
+    } else {
+      req.body.studentId = results.rows[0].student_id
+      next()
     }
-
-    // no response data sent - success status is sufficient
-    res.status(200).send()
   })
 }
 
@@ -53,8 +55,8 @@ exports.addStudent = (req, res, next) => {
   }
 
   // does name already exist in db
-  pool.query(queries.getStudentByName, [name], (error, results) => {
-    handleQueryError(error, next)
+  pool.query(queries.getStudentIdByName, [name], (error, results) => {
+    handleQueryError(res, error, next)
 
     if (results.rows.length !== 0) {
       // student exists
@@ -63,11 +65,35 @@ exports.addStudent = (req, res, next) => {
     } else {
       // okay to add new student to db
       pool.query(queries.addStudent, [name], (error, results) => {
-        handleQueryError(error, next)
+        handleQueryError(res, error, next)
 
         req.body.studentId = results.rows[0].student_id
         next()
       })
     }
+  })
+}
+
+exports.getAttemptsByStudentId = (req, res, next) => {
+  const studentId = req.body.studentId
+
+  pool.query(queries.getStudentStats, [studentId], (error, results) => {
+    handleQueryError(res, error, next)
+
+    const totalAttempts = results.rows.length
+    let successes = 0
+    results.rows.forEach((result) => {
+      if (result.is_correct) successes++
+    })
+    const successRate = (successes / totalAttempts) * 100
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        totalAttempts,
+        successes,
+        successRate,
+      },
+    })
   })
 }

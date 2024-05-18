@@ -1,0 +1,21 @@
+.modal {
+  border: 1px solid #fff;
+  background-color: #303030;
+  border-radius: 20px;
+  max-width: 40vw;
+
+  &::backdrop {
+    background: #303030;
+    opacity: 0.5;
+  }
+
+  .modal-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    p {
+      text-align: center;
+    }
+  }
+}

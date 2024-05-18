@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 
+import "../styles/modal.scss"
+
 function Modal({ children, open }) {
   const dialog = useRef()
 
@@ -16,7 +18,7 @@ function Modal({ children, open }) {
 
   return createPortal(
     <dialog ref={dialog} className="modal">
-      {children}
+      <div className="modal-inner">{children}</div>
     </dialog>,
     document.getElementById("modal")
   )
