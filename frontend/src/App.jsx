@@ -41,17 +41,18 @@ const App = () => {
   // grab just the points data and sort in ascending order depending on the x coordinate
   const points = ascendingObj(chartData.datasets[0].data)
 
-  // const handleNewCoordinates = () => {
-  //   setAttemptNum(1)
-  //   setChartData(generatePoints)
-  // }
-
+  /**
+   * Resets all but the form area to prepare for next attempt
+   */
   const handleReset = () => {
     setShowModal({ show: false, content: null })
     setChartData(generatePoints())
     setAttemptData({ attemptNum: 1, coordinatesId: undefined })
   }
 
+  /**
+   * Draws the correct answer on the graph
+   */
   const handleRevealLinearEquation = () => {
     setChartData((prev) => {
       return {
@@ -64,6 +65,12 @@ const App = () => {
     })
   }
 
+  /**
+   * Draws a linear equasion using the user inputs
+   *
+   * @param {Float} slope
+   * @param {Float} intercept
+   */
   const handleDrawLinearEquation = (slope, intercept) => {
     setChartData((prev) => {
       const newDatasets = [prev.datasets[0], drawUserLine(slope, intercept)]
@@ -200,7 +207,7 @@ const App = () => {
   }
 
   /**
-   * Show useful metrics to the user after entering their name
+   * Shows useful metrics to the user after entering their name
    */
   const handleShowUserStats = async (name) => {
     if (!name || name === "") {
@@ -241,7 +248,9 @@ const App = () => {
           onSubmit={handleSubmission}
           onDraw={handleDrawLinearEquation}
         />
-        {myStats && <MyStats>{myStats}</MyStats>}
+        <div className="my-stats-area">
+          {myStats && <MyStats>{myStats}</MyStats>}
+        </div>
       </div>
     </>
   )

@@ -6,8 +6,8 @@ function Form({ onShowStats, onSubmit, onDraw }) {
   const [slope, setSlope] = useState("")
   const [intercept, setIntercept] = useState("")
 
-  const handleDrawLinear = () => {
-    if (slope !== "" && intercept !== "" && slope >= 0 && intercept >= 0) {
+  const handleDrawLinearEquasion = () => {
+    if (slope !== "" && intercept !== "") {
       onDraw(slope, intercept)
     }
   }
@@ -47,7 +47,7 @@ function Form({ onShowStats, onSubmit, onDraw }) {
         <button type="button" onClick={() => onShowStats(name)}>
           Show My Stats
         </button>
-        <button type="button" onClick={handleDrawLinear}>
+        <button type="button" onClick={handleDrawLinearEquasion}>
           Draw
         </button>
         <button type="submit">Verify</button>

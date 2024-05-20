@@ -4,7 +4,7 @@ const controller = require("../controllers/studentController")
 const router = Router()
 
 // create new student in db
-router.post("/", controller.addStudent, controller.confirmSuccess)
+router.post("/", controller.addStudent, controller.confirmResponse)
 
 // not critical to this application, but probably useful to the professor
 router.get("/", controller.getStudents)

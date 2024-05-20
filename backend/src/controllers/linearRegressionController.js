@@ -1,6 +1,7 @@
 const pool = require("../../db")
-const AppError = require("../../utils/AppError")
 const queries = require("../queries/linearRegressionQueries")
+const AppError = require("../../utils/AppError")
+const { handleQueryError } = require("../../utils/queryError")
 
 const verifyStudentId = (studentId, res, next) => {
   if (!studentId) {
@@ -49,10 +50,7 @@ exports.addCoordinates = (req, res, next) => {
       queries.addCoordinates,
       [studentId, ...coordinates],
       (error, results) => {
-        if (error) {
-          console.error("Error executing query: ", error)
-          res.status(500).send("Internal Server Error")
-        }
+        handleQueryError(res, error, next)
 
         res.locals.setId = results.rows[0].set_id
         next()
@@ -66,7 +64,6 @@ exports.addCoordinates = (req, res, next) => {
 }
 
 exports.isLineOfBestFit = (req, res, next) => {
-  const studentId = verifyStudentId(req.body.studentId, res, next)
   const setId = res.locals.setId
   const { coordinates, slope, intercept, attemptNum } = req.body
 
@@ -98,10 +95,7 @@ exports.isLineOfBestFit = (req, res, next) => {
     queries.newAttempt,
     [setId, slope, intercept, isCorrect, attemptNum],
     (error, results) => {
-      if (error) {
-        console.error("Error executing query: ", error)
-        res.status(500).send("Internal Server Error")
-      }
+      handleQueryError(res, error, next)
 
       if (!isCorrect && attemptNum >= 3) {
         res.status(200).json({

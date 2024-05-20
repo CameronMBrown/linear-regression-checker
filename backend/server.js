@@ -13,10 +13,6 @@ dotenv.config({ path: "./config.env" })
 const app = require("./app")
 const PORT = process.env.PORT || 3000
 
-app.get("/", (req, res) => {
-  res.send("hello from the server")
-})
-
 app.use("/api/v1/students", studentRoutes)
 
 const server = app.listen(PORT, () => {
