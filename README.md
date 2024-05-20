@@ -139,6 +139,8 @@ cd backend && npm start
 cd frontend && npm start
 ```
 
+Vite should open a browser window automatically for you, likely open on https://localhost:5173
+
 ## Testing
 
 Jest is used to test the primary use cases for the app. To run the test suite do the following:
