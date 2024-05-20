@@ -70,7 +70,7 @@ cd ../frontend && npm install
 3. Run the provided create database script. The script will prompt you for your PostgreSQL database username and password. This information is then saved for when the app is run and it attempts to connect to the database. I reccomend you create the database with user postgres and no password as these are the default fallback values. If you have problems connecting to the database at runtime, you can try running this script again. Or edit the /backend/db.js file and enter your credentials manually.
 
 ```
-npm run createdb
+cd backend && npm run createdb
 ```
 
 4. If you encounter any issues with local database setup PLEASE contact me directly cam.brown94@gmail.com
